@@ -1,0 +1,55 @@
+---
+title: "EggNOG_UpsetR"
+author: "Jonathan Lombardino"
+date: "May 20, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyverse)
+library(UpSetR)
+library(RColorBrewer)
+library(ggplot2)
+```
+
+```{r wrangle}
+
+input_filepath <- "eggNOG_Named_Proteins.csv"
+input_csv <- read.csv(input_filepath) %>% select("Paucimobilis_FKI.L5.BR.P1", "Paucimobilis_LCT.SP1", "Paucimobilis_NCTC11030", "Sanguinis_IIF7SW.B3A", "Sanguinis_IIF7SW.B5", "Sanguinis_ISS_IIF7SWP", "Sanguinis_NBRC_13937")
+input_csv
+cols <- colnames(input_csv)
+
+spp <- c("paucimobilis", "paucimobilis", "paucimobilis", "sanguinis", "sanguinis", "sanguinis", "sanguinis")
+flt <- c("SPACE", "SPACE", "TYPE", "SPACE", "SPACE", "SPACE", "TYPE") 
+combo <- paste(spp, flt, sep="_")
+
+meta <- data_frame(cols, spp, flt, combo)
+meta$combo
+meta
+
+```
+
+```{r plot, echo=FALSE}
+jvenn_rose = "#F8ACAF"
+jvenn_green = "#7FB27F"
+jvenn_blue = "#ACCDE9"
+jvenn_yellow = "#E7E78D"
+  
+upset_table = fromList(input_csv)
+meta
+svg(filename = "KO_Sphingomonas_proteins.svg", height = 8, width =14, pointsize = 12)
+upset(upset_table, order.by = c("freq"), group.by = "degree", nsets=7, nintersects = 150, # plot all 8 sets, all intersects, and order by freq
+      mainbar.y.label = "Shared Gene Count", sets.x.label = "Gene Count", # add labels
+      mb.ratio = c(.60, .40) , #ratio of plot to bar chart,
+      matrix.dot.alpha = 0.5,
+      ## Add color coding to matrix plot, pick a column, and what values you want to group
+      set.metadata = list(data = meta, 
+                     plots = list(list(type = "matrix_rows", column = "combo", colors = c(paucimobilis_SPACE = jvenn_green, paucimobilis_TYPE = jvenn_blue, sanguinis_SPACE = jvenn_rose, sanguinis_TYPE = jvenn_yellow ), alpha = 1
+                             ))),
+      text.scale = c(1.8,1.2,1.5,1.5,1.5,1.3) #intersection size title, intersection ticks, set size title, set size ticks, set names, numbers above bars
+      )
+dev.off()
+                                                                                  
+```
